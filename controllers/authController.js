@@ -7,6 +7,15 @@ const handleErrors = (err) => {
 
   let errors = { email: "", password: " " };
 
+  // incorect email from login
+  if (err.message === "Incorrect email") {
+    errors.email = "That email is not registered";
+  }
+  // incorect password from login
+  if (err.message === "Incorrect password") {
+    errors.password = "That password is incorrect";
+  }
+
   // duplicates error code
   if (err.code === 11000) {
     errors.email = "that email is already registered";
@@ -56,8 +65,11 @@ module.exports.login_post = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.login(email, password);
+    const token = createToken(user._id);
+    res.cookie("jwt", token, { maxAge: maxAge * 1000, httpOnly: true });
     res.status(200).json({ user: user._id });
   } catch (err) {
-    res.status(400).json({ error: "" });
+    const errors = handleErrors(err);
+    res.status(400).json({ error: errors });
   }
 };
